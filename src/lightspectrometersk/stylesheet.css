@@ -1,0 +1,30 @@
+
+/*
+.series-R {
+      -fx-stroke: red;
+      -fx-stroke-width: 1.5px;
+}
+*/
+
+.series-G {
+    
+}
+.series-B {
+    
+}
+
+
+.series-R .chart-line-symbol {
+    -fx-background-color: red, red;
+    -fx-background-radius: 0px;
+}
+
+/* Colors come the order the charts have been added 0-Red, 1-Green, 2-Blue  */
+/* Modifying here line colors */
+.default-color0.chart-series-line { -fx-stroke: red; }
+.default-color1.chart-series-line { -fx-stroke: green; }
+.default-color2.chart-series-line { -fx-stroke: blue; }
+/* Legends colors */
+.default-color0.chart-line-symbol { -fx-background-color: red, red; }
+.default-color1.chart-line-symbol { -fx-background-color: green, green; }
+.default-color2.chart-line-symbol { -fx-background-color: blue, blue; }
