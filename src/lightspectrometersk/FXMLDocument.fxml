@@ -7,6 +7,7 @@
 <?import javafx.scene.layout.*?>
 
 <?import lightspectrometersk.DACs ?>
+<?import photodiodevis.PhotodiodeVis ?>
 
 <AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="lightspectrometersk.FXMLDocumentController">
     <children>
@@ -43,9 +44,11 @@
                     </AnchorPane>
                   </content>
                 </Tab>
-                <Tab text="Spectrum">
+                <Tab text="Photodiode">
                   <content>
-                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                    <PhotodiodeVis fx:id="photovis"/>
+                    </AnchorPane>
                   </content>
                 </Tab>
               </tabs>

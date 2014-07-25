@@ -41,13 +41,6 @@ import javafx.scene.layout.VBox;
  */
 public class DACs extends VBox implements Initializable {
 
-    private final double __LED_VRef = 3.3; // Volts
-    private final double __LED_VccResistor = 10; // Ohms
-    private final int __ADC_MaxCounts = 4095; // 12 bits ADC
-    private final byte __RED_DAC_Code = 0x02;
-    private final byte __GREEN_DAC_Code = 0x04;
-    private final byte __BLUE_DAC_Code = 0x06;
-
     private static volatile DACs instance = null;
     private SocketManager socketMan;
     private ComponentsMap comp;
@@ -178,7 +171,7 @@ public class DACs extends VBox implements Initializable {
     private int[] refreshADC() {
 
         String ADCres = socketMan.Send(comp.GetUnitName("ADC") + " read\r");
-        int[] values = ExtractADCRead(ADCres, 8, 8); // 8 bytes to read, 8 extracted int values to retreived
+        int[] values = socketMan.ExtractADCRead(ADCres, 8, 8); // 8 bytes to read, 8 extracted int values to retreived
 
         Map<Integer, Label> ledsMapping = new HashMap<>();
         ledsMapping.put(0, fBlueLED_ADCLabel); // ADC0 --> Blue
@@ -211,6 +204,10 @@ public class DACs extends VBox implements Initializable {
         curr = String.format("%.3f", val);
         ledsMappingCurrent.get(values[4]).setText(curr);
 
+        val = ADCToVoltage((double) values[7]);
+        //curr = String.format("%.3f", val);
+        System.out.printf("Photodiode = 0x%x %.3f\n", values[7], val);
+        
         return values;
     }
 
@@ -218,7 +215,7 @@ public class DACs extends VBox implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
 
         // Initializing the DACs tab
-        System.err.println("DACs ...\n");
+        System.err.println("DACs tab.");
         // Connect to the socket manager
         socketMan = SocketManager.getInstance();
         comp = ComponentsMap.getInstance();
@@ -259,9 +256,9 @@ public class DACs extends VBox implements Initializable {
     public double ADCToVoltage(double adcread) {
 
         double val;
-        val = -1 * __LED_VRef / (double) __ADC_MaxCounts;
+        val = -1 * socketMan.__LED_VRef / (double) socketMan.__ADC_MaxCounts;
         val = val * adcread;
-        val = val + __LED_VRef; // This is the ADC read in Volts
+        val = val + socketMan.__LED_VRef; // This is the ADC read in Volts
 
         return val;
     }
@@ -303,7 +300,7 @@ public class DACs extends VBox implements Initializable {
         fBCheckBox.setVisible(true);
         fBCheckBox.setSelected(true);
         fminScanTextField.setText(String.valueOf(0));
-        fmaxScanTextField.setText(String.valueOf(__ADC_MaxCounts));
+        fmaxScanTextField.setText(String.valueOf(socketMan.__ADC_MaxCounts));
         fstepScanTextField.setText(String.valueOf(100));
 
         
@@ -532,70 +529,4 @@ public class DACs extends VBox implements Initializable {
         return true;
     }
 
-    public int[] ExtractADCRead(String r, int nbytes, int nvalues) {
-
-        int[] results = new int[nvalues];
-
-        // Get rid of the doc
-        int dotIndx = r.indexOf('.');
-        String adcread = r.substring(dotIndx + 1);
-        // Extract the nbytes.
-        // Since it comes in the form of a string there should be
-        //  here 2*nbytes characters
-        int length = nbytes * 2;
-        if (adcread.length() < length) {
-            System.err.printf("[ERR ] Not enough data to extract %d bytes\n", nbytes);
-            return results;
-        }
-        byte[] data = new byte[length / 2];
-        for (int i = 0; i < length; i += 2) {
-
-            // The radix = 16 --> hex
-            // Then switch 4
-            // Whatch the blanks because it converts it to 0xF
-            char MSB = adcread.charAt(i);
-            char LSB = adcread.charAt(i + 1);
-            if (adcread.charAt(i) == ' ') {
-                MSB = '0';
-            }
-            data[i / 2] = (byte) ((Character.digit(MSB, 16) << 4) + Character.digit(LSB, 16));
-
-            // This is one byte in clear text
-            //String hexC = adcread.substring(i*2, (i*2)+2);
-            // I need to have them in exadecimal
-            //System.out.printf("%x\n", data[i/2] );
-        }
-
-        // Now do the conversion
-        byte channel = 0;
-        int read = 0, readLSB = 0;
-        for (int i = 0; i < length / 2; i++) {
-            // From the first byte extract channel
-            //  and the 4 MSB
-            if (i % 2 == 0) {
-                channel = (byte) (data[i] & (byte) 0x30);   // mask --> ( 00110000 );
-                channel = (byte) (channel >> 4);
-                read = (int) ((byte) (data[i] & 0xF));      // mask --> ( 00001111 );
-            } else {
-                // Switch 8 bits
-                read = (read << 8);
-                // And OR the 8 LSB
-                readLSB = ((int) data[i]) & (int) 0x000000FF; // This mask is necessary here
-                read = read | readLSB;
-                //System.out.printf("%d, %d | ", channel, read );
-                // save
-                results[i - 1] = channel;
-                results[i] = read;
-                // Rewind
-                channel = 0;
-                read = 0;
-            }
-
-        }
-        //System.out.printf("\n");
-
-        return results;
-    }
-
-    
 }
